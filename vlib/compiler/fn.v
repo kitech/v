@@ -1112,7 +1112,7 @@ fn (p mut Parser) fn_call_args(f mut Fn) {
 				}
 			}
 			}
-			if typ.ends_with('*') {
+			if typ.ends_with('*') || typ == 'voidptr'{
 				p.cgen.set_placeholder(ph, 'ptr_str(')
 				p.gen(')')
 				continue

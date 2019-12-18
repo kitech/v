@@ -105,7 +105,7 @@ fn (p mut Parser) string_expr() {
 				is_array := typ.starts_with('array_')
 				typ2 := p.table.find_type(typ)
 				has_str_method := p.table.type_has_method(typ2, 'str')
-				if is_array || has_str_method {
+				if is_array || has_str_method || typ == 'voidptr'{
 					if is_array && !has_str_method {
 						p.gen_array_str(typ2)
 					}
