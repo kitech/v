@@ -24,6 +24,8 @@ done
 sed -i 's/  init();/  gc_init(); init();/g' "vlib/compiler/main.v"
 # _STR use raw malloc, replace it
 sed -i 's/byte\* buf = malloc(len);/byte\* buf = malloc3(len);/g' "vlib/compiler/main.v"
+# go stmt pthread_create args
+sed -i 's/tmp_struct = malloc(/tmp_struct = malloc3(/g' "vlib/compiler/fn.v"
 # memdup in gen_c.v:518
 sed -i 's/)memdup(/)memdup3(/g' 'vlib/compiler/gen_c.v'
 
