@@ -2236,6 +2236,9 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.AsmStmt {
 			c.asm_stmt(mut node)
 		}
+		ast.C99Stmt {
+			c.c99_stmt(mut node)
+		}
 		ast.AssertStmt {
 			c.assert_stmt(mut node)
 		}
@@ -2501,6 +2504,9 @@ fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
 		}
 		c.global_names << field.name
 	}
+}
+
+fn (mut c Checker) c99_stmt(mut stmt ast.C99Stmt) {
 }
 
 fn (mut c Checker) asm_stmt(mut stmt ast.AsmStmt) {

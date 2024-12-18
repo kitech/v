@@ -2499,6 +2499,9 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 			g.write_v_source_line_info_stmt(node)
 			g.asm_stmt(node)
 		}
+		ast.C99Stmt {
+			g.c99_stmt(node)
+		}
 		ast.HashStmt {
 			g.hash_stmt(node)
 		}
@@ -2991,6 +2994,13 @@ fn (mut g Gen) gen_attrs(attrs []ast.Attr) {
 		g.writeln('// Attr: [${attr.name}]')
 	}
 }
+
+
+fn (mut g Gen) c99_stmt(stmt ast.C99Stmt) {
+	g.write_v_source_line_info_stmt(stmt)
+	g.writeln(stmt.snip)
+}
+
 
 fn (mut g Gen) asm_stmt(stmt ast.AsmStmt) {
 	g.write('__asm__')

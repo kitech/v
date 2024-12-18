@@ -510,6 +510,9 @@ pub fn (mut f Fmt) stmt(node ast.Stmt) {
 		ast.AsmStmt {
 			f.asm_stmt(node)
 		}
+		ast.C99Stmt {
+			f.c99_stmt(node)
+		}
 		ast.AssertStmt {
 			f.assert_stmt(node)
 		}

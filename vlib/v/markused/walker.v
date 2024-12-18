@@ -158,6 +158,7 @@ pub fn (mut w Walker) stmt(node_ ast.Stmt) {
 			w.asm_io(node.output)
 			w.asm_io(node.input)
 		}
+		ast.C99Stmt {}
 		ast.AssertStmt {
 			if node.is_used {
 				w.n_asserts++
