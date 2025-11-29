@@ -188,6 +188,9 @@ pub fn (mut p Preferences) fill_with_defaults() {
 	if p.cppcompiler == '' {
 		p.default_cpp_compiler()
 	}
+	if p.rustcompiler == '' {
+		p.default_rust_compiler()
+	}
 	p.find_cc_if_cross_compiling()
 	p.ccompiler_type = cc_from_string(p.ccompiler)
 	p.is_test = p.path.ends_with('_test.v') || p.path.ends_with('_test.vv')
@@ -322,6 +325,14 @@ pub fn (mut p Preferences) default_cpp_compiler() {
 		return
 	}
 	p.cppcompiler = 'c++'
+}
+
+pub fn (mut p Preferences) default_rust_compiler() {
+	if p.ccompiler.contains('rustc') {
+		p.rustcompiler = 'rustc'
+		return
+	}
+	p.rustcompiler = 'rustc'
 }
 
 pub fn vexe_path() string {

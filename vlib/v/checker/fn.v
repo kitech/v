@@ -670,7 +670,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 	}
 	for param in node.decl.params {
 		if param.name == '' {
-			c.error('use `_` to name an unused parameter', param.pos)
+			// c.error('use `_` to name an unused parameter', param.pos)
 		}
 	}
 	c.table.cur_fn = unsafe { &node.decl }
@@ -681,7 +681,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 		parent_var := node.decl.scope.parent.find_var(var.name) or {
 			panic('unexpected checker error: cannot find parent of inherited variable `${var.name}`')
 		}
-		if var.is_mut && !parent_var.is_mut {
+		if false && var.is_mut && !parent_var.is_mut {
 			c.error('original `${parent_var.name}` is immutable, declare it with `mut` to make it mutable',
 				var.pos)
 		}
@@ -3000,6 +3000,22 @@ fn (mut c Checker) check_expected_arg_count(mut node ast.CallExpr, f &ast.Fn) ! 
 				}
 			}
 		}
+		// hackpos begin
+		//dump(node.args)
+		if f.generic_names.len >= 5 {
+			prm := ast.Param{}
+			//f.params << prm
+			mut arg := ast.CallArg{pos: node.pos}
+			arg.expr = ast.IntegerLiteral{val:'${nr_args}', pos: node.pos}
+			arg.typ = arg.expr.get_pure_type()
+			for i := nr_args; i <= f.generic_names.len; i++ {
+				//node.args << node.args[0]
+				node.args << arg
+			}
+			//dump(node.args)
+			return
+		}
+		//hackpos end
 		c.fn_call_error_have_want(
 			nr_params: min_required_params
 			nr_args:   nr_args
@@ -3071,7 +3087,7 @@ fn (mut c Checker) fn_call_error_have_want(p HaveWantParams) {
 	sb.write_string(')')
 	c.add_error_detail(sb.str())
 	args_plural := if p.nr_params == 1 { 'argument' } else { 'arguments' }
-	c.error('expected ${p.nr_params} ${args_plural}, but got ${p.nr_args}', p.pos)
+	c.error('expected hackpos ${p.nr_params} ${args_plural}, but got ${p.nr_args}', p.pos)
 }
 
 fn (mut c Checker) check_predicate_param(is_map bool, elem_typ ast.Type, node ast.CallExpr) {

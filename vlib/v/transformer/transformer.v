@@ -186,6 +186,7 @@ pub fn (mut t Transformer) stmt(mut node ast.Stmt) ast.Stmt {
 		ast.EmptyStmt {}
 		ast.NodeError {}
 		ast.AsmStmt {}
+		ast.C99Stmt {}
 		ast.DebuggerStmt {}
 		ast.AssertStmt {
 			return t.assert_stmt(mut node)

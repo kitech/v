@@ -1195,10 +1195,15 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 	obj_path := os.real_path(path)
 	mut cfile := '${obj_path[..obj_path.len - 2]}.c'
 	mut cpp_file := false
+	mut rust_file := false
 	if !os.exists(cfile) {
 		// Guessed C file does not exist, so it may be a CPP file
 		cfile += 'pp'
 		cpp_file = true
+	}
+	if !os.exists(cfile) {
+		cfile = cfile[..cfile.len-3]+'rs'
+		rust_file = true
 	}
 	opath := v.pref.cache_manager.mod_postfix_with_key2cpath(mod, '.o', obj_path)
 	mut rebuild_reason_message := '${os.quoted_path(obj_path)} not found, building it in ${os.quoted_path(opath)} ...'
@@ -1239,7 +1244,16 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 		}
 		ccompiler = v.pref.cppcompiler
 	}
-	cmd := '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	if rust_file {
+		$if trace_thirdparty_obj_files ? {
+			println('>>> build_thirdparty_obj_files switched from compiler "${ccompiler}" to "${v.pref.rustcompiler}"')
+		}
+		ccompiler = v.pref.rustcompiler
+	}
+	mut cmd := '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	if rust_file {
+		cmd = '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	}
 	$if trace_thirdparty_obj_files ? {
 		println('>>> build_thirdparty_obj_files cmd: ${cmd}')
 	}

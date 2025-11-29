@@ -455,7 +455,7 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 			ast.PrefixExpr {
 				// Do now allow `*x = y` outside `unsafe`
 				if left.op == .mul {
-					if !c.inside_unsafe && !c.pref.translated && !c.file.is_translated {
+					if false && !c.inside_unsafe && !c.pref.translated && !c.file.is_translated {
 						c.error('modifying variables via dereferencing can only be done in `unsafe` blocks',
 							node.pos)
 					} else if mut left.right is ast.Ident {

@@ -433,7 +433,7 @@ fn (mut c Checker) eval_array_fixed_sizes(mut size_expr ast.Expr, size int, elem
 						fixed_size = comptime_value.i64() or { fixed_size }
 					}
 				} else {
-					c.error('non-constant array bound `${size_expr.name}`', size_expr.pos)
+					c.warn('non-constant array bound `${size_expr.name}`', size_expr.pos)
 				}
 			}
 			ast.InfixExpr {
@@ -446,7 +446,7 @@ fn (mut c Checker) eval_array_fixed_sizes(mut size_expr ast.Expr, size int, elem
 			}
 		}
 		if fixed_size <= 0 {
-			c.error('fixed size cannot be zero or negative (fixed_size: ${fixed_size})',
+			c.warn('fixed size cannot be zero or negative (fixed_size: ${fixed_size})',
 				size_expr.pos())
 		}
 	}

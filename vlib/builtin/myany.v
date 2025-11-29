@@ -1,0 +1,1 @@
+/home/gzleo/aprog/vcp/vlib/builtin/myany.v

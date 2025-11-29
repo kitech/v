@@ -60,6 +60,7 @@ mut:
 	inside_sum_type          bool // to prevent parsing inline sum type again
 	inside_asm_template      bool
 	inside_asm               bool
+	inside_c99               bool
 	inside_defer             bool
 	inside_generic_params    bool // indicates if parsing between `<` and `>` of a method/function
 	inside_receiver_param    bool // indicates if parsing the receiver parameter inside the first `(` and `)` of a method
@@ -769,6 +770,9 @@ fn (mut p Parser) top_stmt() ast.Stmt {
 			.key_asm {
 				return p.asm_stmt(true)
 			}
+			.key_c99 {
+				return p.c99_stmt(true)
+			}
 			else {
 				return p.other_stmts(ast.empty_stmt)
 			}
@@ -900,6 +904,65 @@ fn (mut p Parser) goto_eof() {
 	for p.tok.kind != .eof {
 		p.next()
 	}
+}
+
+// todo not support embed {{}}
+// must toplevel stmt
+// hackpos
+fn (mut p Parser) c99_stmt(is_top_level bool) ast.C99Stmt {
+	p.inside_c99 = true
+	defer {p.inside_c99 = false}
+	pos := p.tok.pos()
+	mut bpos := pos // first {
+	mut epos := pos // last }
+	p.check(.key_c99)
+	mut ccsnip := ''
+	mut brmat := 0
+	//dump(p.scanner.text[pos.pos..pos.pos+30])
+	for i:=0; ; i++ {
+		//println('${@FILE_LINE}, ${p.tok.kind}, ${token.Kind.rcbr}, ${i}')
+		mut finbrk := false
+		match p.tok.kind {
+			.lcbr {
+				if brmat > 0 {
+					ccsnip += p.tok.kind.str() + '\n'
+				}else{bpos = p.tok.pos()}
+				brmat += 1
+			}
+			.rcbr {
+				brmat -= 1
+				if brmat > 0 {
+					ccsnip += p.tok.kind.str() + '\n'
+				} else {
+					finbrk = true
+					epos = p.tok.pos()
+				}
+			}
+			.string {
+				ccsnip += '"${p.tok.lit}"'
+			}
+			.hash {
+				ccsnip += p.tok.kind.str() + p.tok.lit + '\n'
+			}
+			else {
+				ccsnip += ' ' + p.tok.lit
+				if p.tok.lit == '' {
+					ccsnip += p.tok.kind.str()
+					if p.tok.kind == .semicolon { ccsnip += '\n' }
+					if p.tok.kind == .lcbr { ccsnip += '\n' }
+				}
+			}
+		}
+		p.next()
+		if finbrk { break }
+		//break
+	}
+
+	ccsnip = p.scanner.text[bpos.pos+1..epos.pos]
+	ccsnip = '    // c99 {\n' + ccsnip + '\n    //}//end c99'
+	//dump(p.scanner.text[bpos.pos..epos.pos+1])
+	//println('ccsnip: ${ccsnip.len}, /${ccsnip}/')
+	return ast.C99Stmt{snip: ccsnip, pos: pos}
 }
 
 fn (mut p Parser) stmt(is_top_level bool) ast.Stmt {
@@ -1131,6 +1194,9 @@ fn (mut p Parser) stmt(is_top_level bool) ast.Stmt {
 		}
 		.key_asm {
 			return p.asm_stmt(false)
+		}
+		.key_c99 {
+			return p.c99_stmt(false)
 		}
 		.semicolon {
 			return p.semicolon_stmt()

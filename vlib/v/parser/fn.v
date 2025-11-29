@@ -363,7 +363,7 @@ fn (mut p Parser) fn_decl() ast.FnDecl {
 			check_name = if language == .js { p.check_js_name() } else { p.check_name() }
 			name = check_name
 		}
-
+		/*
 		if language == .v && !p.pref.translated && !p.is_translated && !p.builtin_mod
 			&& util.contains_capital(check_name) {
 			p.error_with_pos('function names cannot contain uppercase letters, use snake_case instead',
@@ -372,6 +372,7 @@ fn (mut p Parser) fn_decl() ast.FnDecl {
 				scope: unsafe { nil }
 			}
 		}
+		*/
 		if is_method {
 			mut is_duplicate := type_sym.has_method(name)
 			// make sure this is a normal method and not an interface method

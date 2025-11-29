@@ -398,6 +398,8 @@ fn (mut c Checker) comptime_for(mut node ast.ComptimeFor) {
 			if sumtype_sym.kind == .sum_type {
 				variants = (sumtype_sym.info as ast.SumType).variants.clone()
 			}
+		} else if sym.kind == .interface {
+			variants = (sym.info as ast.Interface).types.clone()			
 		} else if sym.kind != .sum_type {
 			c.error('${sym.name} is not Sum type to use with .variants', node.typ_pos)
 		} else {

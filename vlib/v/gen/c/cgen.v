@@ -2711,6 +2711,10 @@ fn (mut g Gen) stmt(node ast.Stmt) {
 			g.write_v_source_line_info_stmt(node)
 			g.asm_stmt(node)
 		}
+		ast.C99Stmt {
+			g.c99_stmt(node)
+			//g.warn('hackpos todo c99', node.pos)
+		}
 		ast.HashStmt {
 			g.hash_stmt(node)
 		}
@@ -3243,6 +3247,12 @@ fn (mut g Gen) gen_attrs(attrs []ast.Attr) {
 	for attr in attrs {
 		g.writeln('// Attr: [${attr.name}]')
 	}
+}
+
+fn (mut g Gen) c99_stmt(stmt ast.C99Stmt) {
+	g.writeln('//hackpos todo __c99__')
+	g.write_v_source_line_info_stmt(stmt)
+	g.writeln(stmt.snip)
 }
 
 fn (mut g Gen) asm_stmt(stmt ast.AsmStmt) {
@@ -5530,6 +5540,7 @@ fn (mut g Gen) ident(node ast.Ident) {
 			}
 			if node.obj.is_inherited {
 				g.write(closure_ctx + '->')
+				g.write('/*hackpos*/')
 			}
 		}
 	} else if node.info is ast.IdentFn {
