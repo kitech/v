@@ -1083,10 +1083,15 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 	obj_path := os.real_path(path)
 	mut cfile := '${obj_path[..obj_path.len - 2]}.c'
 	mut cpp_file := false
+	mut rust_file := false
 	if !os.exists(cfile) {
 		// Guessed C file does not exist, so it may be a CPP file
 		cfile += 'pp'
 		cpp_file = true
+	}
+	if !os.exists(cfile) {
+		cfile = cfile[..cfile.len-3]+'rs'
+		rust_file = true
 	}
 	opath := v.pref.cache_manager.mod_postfix_with_key2cpath(mod, '.o', obj_path)
 	mut rebuild_reason_message := '${obj_path} not found, building it in ${opath} ...'
@@ -1117,7 +1122,15 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 	all_options << moduleflags.c_options_before_target()
 	all_options << '-o ${os.quoted_path(opath)}'
 	all_options << '-c ${os.quoted_path(cfile)}'
-	cc_options := v.thirdparty_object_args(v.ccoptions, all_options, cpp_file).join(' ')
+	mut cc_options := v.thirdparty_object_args(v.ccoptions, all_options, cpp_file).join(' ')
+	if rust_file {
+		all_options.clear()
+		all_options << '-g -C opt-level=0 --crate-type cdylib --emit obj'
+		all_options << '-o ${os.quoted_path(opath)}'
+		all_options << ' ${os.quoted_path(cfile)}'
+		cc_options = all_options.join(' ')
+	}
+	
 
 	// If the third party object file requires a CPP file compilation, switch to a CPP compiler
 	mut ccompiler := v.pref.ccompiler
@@ -1127,7 +1140,16 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 		}
 		ccompiler = v.pref.cppcompiler
 	}
-	cmd := '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	if rust_file {
+		$if trace_thirdparty_obj_files ? {
+			println('>>> build_thirdparty_obj_files switched from compiler "${ccompiler}" to "${v.pref.rustcompiler}"')
+		}
+		ccompiler = v.pref.rustcompiler
+	}
+	mut cmd := '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	if rust_file {
+		cmd = '${v.quote_compiler_name(ccompiler)} ${cc_options}'
+	}
 	$if trace_thirdparty_obj_files ? {
 		println('>>> build_thirdparty_obj_files cmd: ${cmd}')
 	}

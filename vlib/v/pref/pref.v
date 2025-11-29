@@ -166,6 +166,7 @@ pub mut:
 	ccompiler                 string       // the name of the C compiler used
 	ccompiler_type            CompilerType // the type of the C compiler used
 	cppcompiler               string       // the name of the CPP compiler used
+	rustcompiler              string
 	third_party_option        string
 	building_v                bool
 	no_bounds_checking        bool   // `-no-bounds-checking` turns off *all* bounds checks for all functions at runtime, as if they all had been tagged with `[direct_array_access]`
@@ -878,6 +879,11 @@ pub fn parse_args_and_show_errors(known_external_commands []string, args []strin
 			}
 			'-c++' {
 				res.cppcompiler = cmdline.option(args[i..], '-c++', 'c++')
+				i++
+			}
+			'-rust' {
+				res.rustcompiler = cmdline.option(args[i..], '-rust', 'rustc')
+				res.build_options = []
 				i++
 			}
 			'-checker-match-exhaustive-cutoff-limit' {

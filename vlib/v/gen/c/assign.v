@@ -726,7 +726,20 @@ fn (mut g Gen) assign_stmt(node_ ast.AssignStmt) {
 									}
 								} else {
 									if !left_sym.is_array_fixed_ret() {
-										g.write('${styp} ')
+										if left_sym.name.starts_with('[0]') {
+											g.writeln('/*hackpos*/')
+											elemtystr := left_sym.name[3..]
+											// [valen*2+1]ty{} => valen*2+1
+											elemszexpr := '${val}'.all_before(']')[1..]
+											g.writeln('typedef ${elemtystr} ${styp}_${left_sym.idx}[${elemszexpr}];')
+											//dump(left)
+											//dump(node_.right[0]) // val
+											varname := '${left}' // strip &
+											g.writeln('${styp}_${left_sym.idx} ${varname};')
+											g.write('memset(${varname}, 0, sizeof(${styp}_${left_sym.idx})); //')
+										}else{
+											g.write('${styp} ')
+										}
 									} else {
 										g.write('${styp[3..]} ')
 									}

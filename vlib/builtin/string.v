@@ -2919,3 +2919,46 @@ fn data_to_hex_string(data &u8, len int) string {
 	hex[dst] = 0
 	return tos(hex, dst)
 }
+// module builtin
+// addedbyme
+// pub fn(v string) str() string { return v } // duplicate method `str`
+// pub fn(v &string) str() string { return *v } // duplicate method `str`
+pub fn(v string) str1() string { return v }
+// pub fn(s string) toitf() Itface { return itfof(s) }
+pub fn(s string) toany() Vmvalue { return vmvalueof(s) }
+// pub fn(s string) tovmvalue() Itface { return valueof(s) }
+// pub fn(s string) toany() Value { return valueof(s) }
+
+pub fn (s string) elide_right(max int) string {
+	if s.len > max {
+		return s.substr(0, max) + "..."
+	}
+	return s
+}
+pub fn (s string) elide_left(max int) string {
+	if s.len > max {
+		return "..." + s.substr(s.len-max, s.len)
+	}
+	return s
+}
+pub fn (s string) elide_mid(max int) string {
+	return s
+}
+
+pub fn (s string) is_digit() bool {
+	if s.len ==0 { return false }
+	for r in s.runes() {
+		if r >= `0` && r <= `9` {} else { return false }
+	}
+	return true
+}
+
+pub fn (s string) untitle() string {
+	// if !s.is_title() { return s }
+	return s[..1].to_lower() + s[1..]
+}
+
+// \n => ;, "   " => " "
+pub fn (s string) compact() string {
+	return s.replace("\n", "; ").replace("   ", " ").replace("  ", " ")
+}

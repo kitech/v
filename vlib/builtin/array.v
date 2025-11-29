@@ -1035,3 +1035,22 @@ pub fn (data voidptr) vbytes(len int) []u8 {
 pub fn (data &u8) vbytes(len int) []u8 {
 	return unsafe { voidptr(data).vbytes(len) }
 }
+// module builtin
+
+/// array extends
+// safe one, return zero when none
+pub fn (a array) firstz() voidptr {
+	if a.cap <= 0 { return malloc(a.element_size) }
+	return a.data
+	// return a.first()
+}
+pub fn (a array) lastz() voidptr {
+	if a.cap <= 0 { return malloc(a.element_size) }
+	return 	unsafe { &u8(a.data) + u64(a.len - 1) * u64(a.element_size) }
+	// return a.last()
+}
+
+pub fn (a array) atz(idx int) voidptr {
+	if a.cap <= idx { return malloc(a.element_size) }
+	return 	unsafe { &u8(a.data) + u64(idx) * u64(a.element_size) }
+}
