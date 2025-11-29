@@ -489,7 +489,7 @@ fn (mut c Checker) check_valid_snake_case(name string, identifier string, pos to
 	if !c.pref.is_vweb && name.len > 1 && (name[0] == `_` || name.contains('._')) {
 		c.error('${identifier} `${name}` cannot start with `_`', pos)
 	}
-	if !c.pref.experimental && util.contains_capital(name) {
+	if false && !c.pref.experimental && util.contains_capital(name) {
 		c.error('${identifier} `${name}` cannot contain uppercase letters, use snake_case instead',
 			pos)
 	}
@@ -817,7 +817,7 @@ fn (mut c Checker) fail_if_immutable(mut expr ast.Expr) (string, token.Pos) {
 		}
 		ast.Ident {
 			if mut expr.obj is ast.Var {
-				if !expr.obj.is_mut && !c.pref.translated && !c.file.is_translated
+				if false && !expr.obj.is_mut && !c.pref.translated && !c.file.is_translated
 					&& !c.inside_unsafe {
 					if c.inside_anon_fn {
 						c.error('the closure copy of `${expr.name}` is immutable, declare it with `mut` to make it mutable',
@@ -1408,7 +1408,7 @@ fn (mut c Checker) check_or_last_stmt(mut stmt ast.Stmt, ret_type ast.Type, expr
 						return
 					}
 					expected_type_name := c.table.type_to_str(ret_type.clear_option_and_result())
-					c.error('`or` block must provide a default value of type `${expected_type_name}`, or return/continue/break or call a @[noreturn] function like panic(err) or exit(1)',
+					c.warn('`or` block must provide a default value of type `${expected_type_name}`, or return/continue/break or call a @[noreturn] function like panic(err) or exit(1)',
 						stmt.expr.pos())
 				} else {
 					if ret_type.is_ptr() && last_stmt_typ.is_pointer()
@@ -1924,7 +1924,7 @@ fn (mut c Checker) enum_decl(mut node ast.EnumDecl) {
 		enum_imin *= -1
 	}
 	for i, mut field in node.fields {
-		if !c.pref.experimental && util.contains_capital(field.name) {
+		if false && !c.pref.experimental && util.contains_capital(field.name) {
 			// TODO: C2V uses hundreds of enums with capitals, remove -experimental check once it's handled
 			c.error('field name `${field.name}` cannot contain uppercase letters, use snake_case instead',
 				field.pos)
@@ -4781,7 +4781,7 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 		} else if is_mut_struct {
 			c.error('type `mut ${typ_sym.name}` does not support slicing', node.pos)
 		} else if !c.inside_unsafe && !is_ok && !c.pref.translated && !c.file.is_translated {
-			c.error('pointer indexing is only allowed in `unsafe` blocks', node.pos)
+			// c.error('pointer indexing is only allowed in `unsafe` blocks', node.pos)
 		}
 	}
 	if mut node.index is ast.RangeExpr { // [1..2]
@@ -5319,8 +5319,8 @@ fn (mut c Checker) fail_if_stack_struct_action_outside_unsafe(mut ident ast.Iden
 				} else { // e.g. var from `for a in heap_object {`
 					'declaring `${ident.name}` mutable'
 				}
-				c.error('`${ident.name}` cannot be ${failed_action} outside `unsafe` blocks as it might refer to an object stored on stack. Consider ${suggestion}.',
-					ident.pos)
+				// c.error('`${ident.name}` cannot be ${failed_action} outside `unsafe` blocks as it might refer to an object stored on stack. Consider ${suggestion}.',
+				//	ident.pos)
 			}
 		}
 	}

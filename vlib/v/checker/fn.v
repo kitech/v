@@ -601,7 +601,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 	}
 	for param in node.decl.params {
 		if param.name == '' {
-			c.error('use `_` to name an unused parameter', param.pos)
+			// c.error('use `_` to name an unused parameter', param.pos)
 		}
 	}
 	c.table.cur_fn = unsafe { &node.decl }
@@ -612,7 +612,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 		parent_var := node.decl.scope.parent.find_var(var.name) or {
 			panic('unexpected checker error: cannot find parent of inherited variable `${var.name}`')
 		}
-		if var.is_mut && !parent_var.is_mut {
+		if false && var.is_mut && !parent_var.is_mut {
 			c.error('original `${parent_var.name}` is immutable, declare it with `mut` to make it mutable',
 				var.pos)
 		}

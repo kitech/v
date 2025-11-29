@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 // TODO: convert this to v code? handle all platforms
 // currently if it's not macos or win it defaults to the linux impl
 
