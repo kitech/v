@@ -2288,6 +2288,20 @@ fn (mut c Checker) method_call(mut node ast.CallExpr, mut continue_check &bool) 
 			}
 			return ast.void_type
 		}
+		if missmth := c.table.find_method(left_sym, 'method_missing') {
+		    node.name = 'method_missing'
+		    node.is_variadic = true
+		    mut oldargs := node.args.clone()
+		    arg0 := ast.CallArg{expr:ast.StringLiteral{val:method_name}, typ: ast.string_type}
+		    node.args = [arg0]
+		    for mut oldarg in oldargs {
+				oldarg.typ = c.expr(mut oldarg.expr)
+				node.args << oldarg
+		    }
+		    node.expected_arg_types = [ast.string_type, missmth.params[2].typ]
+		    node.return_type = missmth.return_type
+		    return missmth.return_type
+		}
 		// call struct field fn type
 		// TODO: can we use SelectorExpr for all? this dosent really belong here
 		if field := c.table.find_field_with_embeds(left_sym, method_name) {
