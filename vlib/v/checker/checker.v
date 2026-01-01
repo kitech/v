@@ -540,8 +540,8 @@ fn (mut c Checker) check_valid_snake_case(name string, identifier string, pos to
 		c.error('${identifier} `${name}` cannot start with `_`', pos)
 	}
 	if util.contains_capital(name) {
-		c.error('${identifier} `${name}` cannot contain uppercase letters, use snake_case instead',
-			pos)
+		// c.error('${identifier} `${name}` cannot contain uppercase letters, use snake_case instead',
+		//	pos)
 	}
 }
 
@@ -947,7 +947,7 @@ fn (mut c Checker) fail_if_immutable(mut expr ast.Expr) (string, token.Pos) {
 		}
 		ast.Ident {
 			if mut expr.obj is ast.Var {
-				if !expr.obj.is_mut && !c.pref.translated && !c.file.is_translated
+				if false && !expr.obj.is_mut && !c.pref.translated && !c.file.is_translated
 					&& !c.inside_unsafe {
 					if c.inside_anon_fn {
 						c.error('the closure copy of `${expr.name}` is immutable, declare it with `mut` to make it mutable',
@@ -977,7 +977,7 @@ fn (mut c Checker) fail_if_immutable(mut expr ast.Expr) (string, token.Pos) {
 				if !c.pref.translated && c.mod != 'veb' {
 					// TODO: fix this in c2v, do not allow modification of all consts
 					// in translated code
-					c.error('cannot modify constant `${expr.name}`', expr.pos)
+					c.warn('cannot modify constant `${expr.name}`', expr.pos)
 				}
 			}
 		}
@@ -1060,7 +1060,7 @@ fn (mut c Checker) fail_if_immutable(mut expr ast.Expr) (string, token.Pos) {
 					} else {
 						if !field_info.is_mut && !c.pref.translated && !c.file.is_translated {
 							type_str := c.table.type_to_str(expr.expr_type)
-							c.error('field `${expr.field_name}` of struct `${type_str}` is immutable',
+							c.warn('field `${expr.field_name}` of struct `${type_str}` is immutable',
 								expr.pos)
 						}
 						to_lock, pos = c.fail_if_immutable(mut expr.expr)
@@ -1571,7 +1571,7 @@ fn (mut c Checker) check_or_last_stmt(mut stmt ast.Stmt, ret_type ast.Type, expr
 						return
 					}
 					expected_type_name := c.table.type_to_str(ret_type.clear_option_and_result())
-					c.error('`or` block must provide a default value of type `${expected_type_name}`, or return/continue/break or call a @[noreturn] function like panic(err) or exit(1)',
+					c.warn('`or` block must provide a default value of type `${expected_type_name}`, or return/continue/break or call a @[noreturn] function like panic(err) or exit(1)',
 						stmt.expr.pos())
 				} else {
 					if ret_type.is_ptr() && last_stmt_typ.is_pointer()
@@ -1958,7 +1958,7 @@ fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 			c.error('invalid use of reserved type `${field.name}` as a const name', field.pos)
 		}
 		// TODO: Check const name once the syntax is decided
-		if field.name in c.const_names {
+		if !field.name.ends_with('._') && field.name in c.const_names {
 			name_pos := token.Pos{
 				...field.pos
 				len: util.no_cur_mod(field.name, c.mod).len
@@ -2000,8 +2000,8 @@ fn (mut c Checker) const_decl(mut node ast.ConstDecl) {
 				...field.pos
 				len: util.no_cur_mod(field.name, c.mod).len
 			}
-			c.error('cannot use `_` as a const name', name_pos)
-			return
+			// c.error('cannot use `_` as a const name', name_pos)
+			// return
 		}
 		c.const_names << field.name
 	}
@@ -2119,7 +2119,7 @@ fn (mut c Checker) enum_decl(mut node ast.EnumDecl) {
 		enum_imin *= -1
 	}
 	for i, mut field in node.fields {
-		if !c.pref.experimental && util.contains_capital(field.name) {
+		if false && !c.pref.experimental && util.contains_capital(field.name) {
 			// TODO: C2V uses hundreds of enums with capitals, remove -experimental check once it's handled
 			c.error('field name `${field.name}` cannot contain uppercase letters, use snake_case instead',
 				field.pos)
@@ -2437,6 +2437,9 @@ fn (mut c Checker) stmt(mut node ast.Stmt) {
 		ast.AsmStmt {
 			c.asm_stmt(mut node)
 		}
+		ast.C99Stmt {
+			c.c99_stmt(mut node)
+		}
 		ast.AssertStmt {
 			c.assert_stmt(mut node)
 		}
@@ -2599,6 +2602,10 @@ fn (mut c Checker) global_decl(mut node ast.GlobalDecl) {
 		}
 		c.global_names << field.name
 	}
+}
+
+fn (mut c Checker) c99_stmt(mut stmt ast.C99Stmt) {
+	c.warn('todooo hackpos', stmt.pos)
 }
 
 fn (mut c Checker) asm_stmt(mut stmt ast.AsmStmt) {
@@ -3302,7 +3309,7 @@ pub fn (mut c Checker) expr(mut node ast.Expr) ast.Type {
 		}
 		ast.Nil {
 			if !c.inside_unsafe {
-				c.error('`nil` is only allowed in `unsafe` code', node.pos)
+				// c.error('`nil` is only allowed in `unsafe` code', node.pos)
 			}
 			return ast.nil_type
 		}
@@ -3638,7 +3645,7 @@ fn (mut c Checker) cast_expr(mut node ast.CastExpr) ast.Type {
 		}
 		if from_type == ast.voidptr_type_idx && !c.inside_unsafe && !c.pref.translated
 			&& !c.file.is_translated {
-			c.error('cannot cast voidptr to a struct outside `unsafe`', node.pos)
+			c.note('cannot cast voidptr to a struct outside `unsafe`', node.pos)
 		}
 		if !from_type.is_int() && final_from_sym.kind != .enum
 			&& !from_type.is_any_kind_of_pointer() {
@@ -3768,7 +3775,7 @@ fn (mut c Checker) cast_expr(mut node ast.CastExpr) ast.Type {
 	}
 
 	if to_sym.kind == .enum && !(c.inside_unsafe || c.file.is_translated) && from_sym.is_int() {
-		c.error('casting numbers to enums, should be done inside `unsafe{}` blocks', node.pos)
+		// c.error('casting numbers to enums, should be done inside `unsafe{}` blocks', node.pos)
 	}
 
 	if final_to_sym.kind == .function && final_from_sym.kind == .function && !(c.inside_unsafe
@@ -4524,10 +4531,35 @@ fn (mut c Checker) ident(mut node ast.Ident) ast.Type {
 							c.error('undefined variable `${node.name}`', node.pos)
 						} else {
 							c.add_error_detail('use `fn [${node.name}] () {` instead of `fn () {`')
-							c.error('`${node.name}` must be explicitly listed as inherited variable to be used inside a closure',
+							c.warn('`${node.name}` must be explicitly listed as inherited variable to be used inside a closure',
 								node.pos)
 						}
-						return ast.void_type
+						//dump(c.fn_scope)
+						//dump(c.cur_anon_fn)
+						mut prm := ast.Param{ is_mut: true,
+							name: found_var.name,
+							typ : found_var.typ
+							pos : found_var.pos}
+						//dump(found_var)
+						//dump(prm)
+						c.cur_anon_fn.inherited_vars << prm
+						ihvar := ast.Var{
+							is_inherited: true,
+							has_inherited: false,
+							name: found_var.name,
+							expr: found_var.expr,
+							pos: found_var.pos,
+							typ: found_var.typ,
+							share: found_var.share,
+						}
+						
+						c.fn_scope.register(ihvar)
+						c.cur_anon_fn.decl.scope.register(ihvar)
+						//dump(c.cur_anon_fn.decl.scope.get_all_vars())
+						//dump(c.fn_scope)
+						node.obj = ihvar // !!!
+						return prm.typ
+						//return ast.void_type
 					}
 				}
 
@@ -4908,7 +4940,7 @@ fn (mut c Checker) mark_as_referenced(mut node ast.Expr, as_interface bool) {
 					c.error('`${node.name}` cannot be ${mischief} outside `unsafe` blocks as it might be stored on stack. Consider ${suggestion}.',
 						node.pos)
 				} else if type_sym.kind == .array_fixed {
-					c.error('cannot reference fixed array `${node.name}` outside `unsafe` blocks as it is supposed to be stored on stack',
+					c.warn('cannot reference fixed array `${node.name}` outside `unsafe` blocks as it is supposed to be stored on stack',
 						node.pos)
 				} else {
 					match type_sym.kind {
@@ -5145,6 +5177,7 @@ fn (mut c Checker) check_index(typ_sym &ast.TypeSymbol, index ast.Expr, index_ty
 			} else if typ_sym.kind == .array_fixed {
 				i := index.val.int()
 				info := typ_sym.info as ast.ArrayFixed
+				if info.size == 0 && i < 256*1024*1024 {} else // hackpos VLA
 				if (!range_index && i >= info.size) || (range_index && i > info.size) {
 					c.error('index out of range (index: ${i}, len: ${info.size})', index.pos)
 				}
@@ -5257,7 +5290,7 @@ fn (mut c Checker) index_expr(mut node ast.IndexExpr) ast.Type {
 		} else if is_mut_struct {
 			c.error('type `mut ${typ_sym.name}` does not support slicing', node.pos)
 		} else if !c.inside_unsafe && !is_ok && !c.pref.translated && !c.file.is_translated {
-			c.error('pointer indexing is only allowed in `unsafe` blocks', node.pos)
+			// c.error('pointer indexing is only allowed in `unsafe` blocks', node.pos)
 		}
 	}
 	if mut node.index is ast.RangeExpr { // [1..2]
@@ -5840,8 +5873,8 @@ fn (mut c Checker) fail_if_stack_struct_action_outside_unsafe(mut ident ast.Iden
 				} else { // e.g. var from `for a in heap_object {`
 					'declaring `${ident.name}` mutable'
 				}
-				c.error('`${ident.name}` cannot be ${failed_action} outside `unsafe` blocks as it might refer to an object stored on stack. Consider ${suggestion}.',
-					ident.pos)
+				// c.error('`${ident.name}` cannot be ${failed_action} outside `unsafe` blocks as it might refer to an object stored on stack. Consider ${suggestion}.',
+				//	ident.pos)
 			}
 		}
 	}

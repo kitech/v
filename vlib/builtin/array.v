@@ -1134,3 +1134,44 @@ fn panic_on_negative_cap(cap int) {
 		panic_n('negative .cap:', cap)
 	}
 }
+// module builtin
+
+/// array extends
+// safe one, return zero when none
+pub fn (a array) firstz() voidptr {
+	if a.cap <= 0 { return malloc(a.element_size) }
+	return a.data
+	// return a.first()
+}
+pub fn (a array) lastz() voidptr {
+	if a.cap <= 0 { return malloc(a.element_size) }
+	return 	unsafe { &u8(a.data) + u64(a.len - 1) * u64(a.element_size) }
+	// return a.last()
+}
+
+pub fn (a array) atz(idx int) voidptr {
+	if a.cap <= idx { return malloc(a.element_size) }
+	return 	unsafe { &u8(a.data) + u64(idx) * u64(a.element_size) }
+}
+
+/*
+// put v to first, need move element
+// if exist, remote first
+@[markused]
+pub fn (a array) lift(v voidptr) {
+    idx := a.index(v) // native magic method, not callable here
+    if idx == 0 { return }
+    a.delete(idx)
+    a.prepend(v)
+}
+@[markused]
+pub fn (a array) ensure_first(v voidptr) { a.lift(v) }
+// if exist, remote first
+@[markused]
+pub fn (a array) ensure_last(v voidptr) {
+    idx := a.index(v)
+    if idx == a.len-1 { return }
+    a.delete(idx)
+    a.push_many(v, 1)
+}
+*/

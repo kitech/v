@@ -375,7 +375,7 @@ fn (mut p Parser) fn_decl() ast.FnDecl {
 			check_name = if language == .js { p.check_js_name() } else { p.check_name() }
 			name = check_name
 		}
-
+		/*
 		if language == .v && !p.pref.translated && !p.is_translated && !p.builtin_mod
 			&& util.contains_capital(check_name) {
 			p.error_with_pos('function names cannot contain uppercase letters, use snake_case instead',
@@ -384,6 +384,7 @@ fn (mut p Parser) fn_decl() ast.FnDecl {
 				scope: unsafe { nil }
 			}
 		}
+		*/
 		if is_method {
 			mut is_duplicate := type_sym.has_method(name)
 			// make sure this is a normal method and not an interface method
@@ -575,11 +576,11 @@ run them via `v file.v` instead',
 				&& elem_type_sym.language == .v
 		}
 		if is_non_local {
-			p.error_with_pos('cannot define new methods on non-local type ${type_sym.name}. Define an alias and use that instead like `type AliasName = ${type_sym.name}` ',
-				rec.type_pos)
-			return ast.FnDecl{
-				scope: unsafe { nil }
-			}
+			// p.error_with_pos('cannot define new methods on non-local type ${type_sym.name}. Define an alias and use that instead like `type AliasName = ${type_sym.name}` ',
+			// 	rec.type_pos)
+			// return ast.FnDecl{
+			// 	scope: unsafe { nil }
+			// }
 		}
 		type_sym_method_idx = type_sym.register_method(ast.Fn{
 			name:          name
@@ -588,7 +589,7 @@ run them via `v file.v` instead',
 			return_type:   return_type
 			is_variadic:   is_variadic
 			generic_names: generic_names
-			is_pub:        is_pub
+			is_pub:        true || is_pub
 			is_deprecated: is_deprecated
 			is_noreturn:   is_noreturn
 			is_unsafe:     is_unsafe
@@ -641,11 +642,11 @@ run them via `v file.v` instead',
 			is_variadic:           is_variadic
 			is_c_variadic:         is_c_variadic
 			generic_names:         generic_names
-			is_pub:                is_pub
+			is_pub:                true || is_pub
 			is_deprecated:         is_deprecated
 			is_noreturn:           is_noreturn
 			is_ctor_new:           is_ctor_new
-			is_unsafe:             is_unsafe
+			is_unsafe:             false && is_unsafe
 			is_must_use:           is_must_use
 			is_main:               is_main
 			is_test:               is_test
@@ -731,7 +732,7 @@ run them via `v file.v` instead',
 		is_main:            is_main
 		is_test:            is_test
 		is_keep_alive:      is_keep_alive
-		is_unsafe:          is_unsafe
+		is_unsafe:          false && is_unsafe
 		is_must_use:        is_must_use
 		is_markused:        is_markused
 		is_ignore_overflow: is_ignore_overflow

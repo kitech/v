@@ -551,8 +551,9 @@ static void update_offset(printbuffer * const buffer)
 /* securely comparison of floating-point variables */
 static cJSON_bool compare_double(double a, double b)
 {
-    double maxVal = (a > 0 ? a : -a) > (b > 0 ? b : -b) ? (a > 0 ? a : -a) : (b > 0 ? b : -b);
-    return (a - b <= maxVal * DBL_EPSILON) && (b - a <= maxVal * DBL_EPSILON);
+    //double maxVal = (a > 0 ? a : -a) > (b > 0 ? b : -b) ? (a > 0 ? a : -a) : (b > 0 ? b : -b);
+    //return (a - b <= maxVal * DBL_EPSILON) && (b - a <= maxVal * DBL_EPSILON);
+	return false;
 }
 
 /* Render the number nicely from the given item into a string. */

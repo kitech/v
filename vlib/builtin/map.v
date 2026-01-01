@@ -811,3 +811,5 @@ pub fn (m &map) free() {
 		m.free_fn = nil
 	}
 }
+// module builtin
+

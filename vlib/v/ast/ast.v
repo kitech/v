@@ -82,6 +82,7 @@ pub type Expr = NodeError
 	| UnsafeExpr
 
 pub type Stmt = AsmStmt
+	| C99Stmt
 	| AssertStmt
 	| AssignStmt
 	| Block
@@ -1700,6 +1701,16 @@ pub mut:
 	expr_type Type   // `byteptr`, the type of the `buf` expression
 	has_arg   bool   // true for `string(buf, n)`, false for `&Type(buf)`
 	pos       token.Pos
+}
+
+pub struct C99Stmt {
+pub:
+	x bool
+	pos    token.Pos
+	snip   string
+pub mut:
+	scope &Scope = unsafe {nil}
+	//output        []
 }
 
 @[minify]

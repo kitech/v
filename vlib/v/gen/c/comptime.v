@@ -872,6 +872,29 @@ fn (mut g Gen) comptime_for(node ast.ComptimeFor) {
 				g.pop_comptime_info()
 			}
 		}
+
+		if sym.info is ast.Interface {
+			if sym.info.types.len > 0 {
+				g.writeln('\tVariantData ${node.val_var} = {0};')
+			}
+			g.comptime.inside_comptime_for = true
+			for variant in sym.info.types {
+				g.defer_stmts = old_defer_stmts
+				g.push_new_comptime_info()
+				g.comptime.inside_comptime_for = true
+				g.comptime.comptime_for_variant_var = node.val_var
+				g.type_resolver.update_ct_type('${node.val_var}.typ', variant)
+
+				g.writeln('/* variant ${i} : ${g.table.type_to_str(variant)} */ {')
+				g.writeln('\t${node.val_var}.typ = ${int(variant)};\t// ')
+				g.stmts(node.stmts)
+				g.write_defer_stmts(node.scope, false, node.pos)
+				g.writeln('}')
+				i++
+				g.pop_comptime_info()
+			}
+		}
+
 	} else if node.kind == .params {
 		func := if sym.info is ast.FnType { &sym.info.func } else { g.comptime.comptime_for_method }
 		if func.params.len > 0 {

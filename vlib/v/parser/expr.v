@@ -39,7 +39,8 @@ fn (mut p Parser) expr(precedence int) ast.Expr {
 		if token.is_decl(p.tok.kind) && p.disallow_declarations_in_script_mode() {
 			return ast.empty_expr
 		}
-		p.unexpected(prepend_msg: 'invalid expression:')
+		println('fffff${err},${p.tok}')
+		p.unexpected(prepend_msg: '++invalid expression:')
 	}
 }
 
@@ -535,9 +536,12 @@ fn (mut p Parser) check_expr(precedence int) !ast.Expr {
 				p.scope.mark_var_as_used(ident.name)
 				p.add_defer_var(ident)
 				p.is_stmt_ident = is_stmt_ident
-			} else if p.tok.kind != .eof && !(p.tok.kind == .rsbr && p.inside_asm) {
+			} else if p.tok.kind != .eof && !(p.tok.kind == .rsbr && p.inside_asm) && 	!(p.tok.kind == .rsbr && p.inside_c99) {
 				// eof should be handled where it happens
-				return error('none')
+				//dump(p.tok)
+				//print_backtrace()
+				// hackpos
+				return error('none111,${p.inside_c99},${p.tok.kind}')
 				// return p.unexpected(prepend_msg: 'invalid expression: ')
 			}
 		}
@@ -562,6 +566,9 @@ fn (mut p Parser) check_expr(precedence int) !ast.Expr {
 fn (mut p Parser) expr_with_left(left ast.Expr, precedence int, is_stmt_ident bool) ast.Expr {
 	mut node := left
 	if p.inside_asm && p.prev_tok.pos().line_nr < p.tok.pos().line_nr {
+		return node
+	}
+	if p.inside_c99 && p.prev_tok.pos().line_nr < p.tok.pos().line_nr {
 		return node
 	}
 
@@ -625,7 +632,7 @@ fn (mut p Parser) expr_with_left(left ast.Expr, precedence int, is_stmt_ident bo
 			}
 		} else if p.tok.kind == .key_as && p.tok.line_nr == p.prev_tok.line_nr {
 			// sum type as cast `x := SumType as Variant`
-			if !p.inside_asm {
+			if !p.inside_asm && !p.inside_c99 {
 				pos := p.tok.pos()
 				p.next()
 				typ := p.parse_type()

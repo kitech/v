@@ -672,7 +672,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 	}
 	for param in node.decl.params {
 		if param.name == '' {
-			c.error('use `_` to name an unused parameter', param.pos)
+			// c.error('use `_` to name an unused parameter', param.pos)
 		}
 	}
 	c.table.cur_fn = unsafe { &node.decl }
@@ -683,7 +683,7 @@ fn (mut c Checker) anon_fn(mut node ast.AnonFn) ast.Type {
 		parent_var := node.decl.scope.parent.find_var(var.name) or {
 			panic('unexpected checker error: cannot find parent of inherited variable `${var.name}`')
 		}
-		if var.is_mut && !parent_var.is_mut {
+		if false && var.is_mut && !parent_var.is_mut {
 			c.error('original `${parent_var.name}` is immutable, declare it with `mut` to make it mutable',
 				var.pos)
 		}
@@ -1049,7 +1049,7 @@ fn (mut c Checker) fn_call(mut node ast.CallExpr, mut continue_check &bool) ast.
 		return node.return_type
 	} else if fn_name == '__addr' {
 		if !c.inside_unsafe {
-			c.error('`__addr` must be called from an unsafe block', node.pos)
+			// c.error('`__addr` must be called from an unsafe block', node.pos)
 		}
 		if args_len != 1 {
 			c.error('`__addr` requires 1 argument', node.pos)
@@ -1412,6 +1412,28 @@ fn (mut c Checker) fn_call(mut node ast.CallExpr, mut continue_check &bool) ast.
 		for mut arg in node.args {
 			c.expr(mut arg.expr)
 		}
+		// fn_name Foo__static__bar
+		// fn_name foobar
+		// node.get_name() Foo.bar
+		modmis_fnname := '${node.mod}.function_missing'
+		if missmth := c.table.find_fn(modmis_fnname) {
+		    // c.note('gooot ${fn_name} ${modmis_fnname}', node.pos)
+		    save_node_name := node.get_name()
+		    node.name = modmis_fnname // 'function_missing'
+		    node.is_variadic = true
+		    mut oldargs := node.args.clone()
+		    arg0 := ast.CallArg{expr:ast.StringLiteral{val:save_node_name}, typ: ast.string_type}
+		    node.args = [arg0]
+			for mut oldarg in oldargs {
+				oldarg.typ = c.expr(mut oldarg.expr)
+				node.args << oldarg
+		    }
+		    node.expected_arg_types = [ast.string_type, missmth.params[1].typ]
+		    node.return_type = missmth.return_type
+		    continue_check = true // !!!
+		    return missmth.return_type
+		}
+		// dump(node)
 		c.error('unknown function: ${node.get_name()}', node.pos)
 		return ast.void_type
 	}
@@ -1441,9 +1463,12 @@ fn (mut c Checker) fn_call(mut node ast.CallExpr, mut continue_check &bool) ast.
 		}
 	}
 	node.is_keep_alive = func.is_keep_alive
+	// if !func.is_unsafe && func.attrs.contains('unsafe') { func.is_unsafe = true } // hotfix
 	if func.language == .v && func.no_body && !c.pref.translated && !c.file.is_translated
 		&& !func.is_unsafe && !func.is_file_translated && func.mod != 'builtin' {
+		if !func.is_unsafe && func.attrs.contains('unsafe') {}else{
 		c.error('cannot call a function that does not have a body', node.pos)
+		}
 	}
 	if node.concrete_types.len > 0 && func.generic_names.len > 0
 		&& node.concrete_types.len != func.generic_names.len {
@@ -2288,6 +2313,51 @@ fn (mut c Checker) method_call(mut node ast.CallExpr, mut continue_check &bool) 
 			}
 			return ast.void_type
 		}
+		if missmth := c.table.find_method(left_sym, 'method_missing') {
+		    // gen a forward method:
+			// bar(a0 ty, a1 ty, a2 ty) Anyer { return x.method_missing('bar', a0, a1, a2) }
+            // c.note('found `method_missing` method for `${left_sym.symbol_name_except_generic()}` when `${method_name}` not exist', node.pos)
+            // rewrite ast to call method_missing(method_name, ...args)
+            node.name = 'method_missing'
+            node.is_variadic = true
+            ccarg := ast.CallArg{expr:ast.StringLiteral{val:method_name}, typ: ast.string_type}
+            mut oldargs := node.args.clone()
+            node.args = []ast.CallArg{}
+            node.args << ccarg
+            mut vaarr := ast.ArrayInit{}
+            vaarr.typ = missmth.params[2].typ
+            // node.args << ast.CallArg{expr: vaarr, typ: missmth.params[2].typ}
+            for idx, mut oldarg in oldargs {
+                if oldarg.typ == ast.no_type {
+                    typ := c.expr(mut oldarg.expr)
+                    // c.note("why arg${idx} is no_type ${oldarg.expr},${c.expr(mut oldarg.expr)}", node.pos)
+                    oldarg.typ = typ // how get this type, why no type for default
+                }
+                node.args << oldarg
+                // dump(oldarg.typ)
+                // dump(oldarg.typ.idx())
+            }
+            old_arg_types := node.expected_arg_types
+            node.expected_arg_types = []ast.Type{}
+            node.expected_arg_types << ast.string_type
+            for oldarg in oldargs {
+                _ = oldarg
+                // node.expected_arg_types << oldarg.typ
+            }
+            node.expected_arg_types << missmth.params[2].typ // variadic args
+            // for oldty in old_arg_types { node.expected_arg_types << oldty }
+            for idx, prm in missmth.params {
+                _ = idx
+                _ = prm
+                // node.expected_arg_types << prm.typ
+            }
+            // c.note('call args ${node.args.str()}, ${oldargs.str()}, call types ${node.expected_arg_types.str()}, oldtys ${old_arg_types.str()}, call expr args ${node.args.str()}', node.pos)
+            // c.note('params types ${missmth.params.str()}', node.pos)
+            // dump(missmth.params[2].typ)
+            node.return_type = missmth.return_type
+            
+            return missmth.return_type
+		}
 		// call struct field fn type
 		// TODO: can we use SelectorExpr for all? this dosent really belong here
 		if field := c.table.find_field_with_embeds(left_sym, method_name) {
@@ -3033,6 +3103,22 @@ fn (mut c Checker) check_expected_arg_count(mut node ast.CallExpr, f &ast.Fn) ! 
 				}
 			}
 		}
+		// hackpos begin
+		//dump(node.args)
+		if f.generic_names.len >= 5 {
+			prm := ast.Param{}
+			//f.params << prm
+			mut arg := ast.CallArg{pos: node.pos}
+			arg.expr = ast.IntegerLiteral{val:'${nr_args}', pos: node.pos}
+			arg.typ = arg.expr.get_pure_type()
+			for i := nr_args; i <= f.generic_names.len; i++ {
+				//node.args << node.args[0]
+				node.args << arg
+			}
+			//dump(node.args)
+			return
+		}
+		//hackpos end
 		c.fn_call_error_have_want(
 			nr_params: min_required_params
 			nr_args:   nr_args
@@ -3104,7 +3190,7 @@ fn (mut c Checker) fn_call_error_have_want(p HaveWantParams) {
 	sb.write_string(')')
 	c.add_error_detail(sb.str())
 	args_plural := if p.nr_params == 1 { 'argument' } else { 'arguments' }
-	c.error('expected ${p.nr_params} ${args_plural}, but got ${p.nr_args}', p.pos)
+	c.error('expected hackpos ${p.nr_params} ${args_plural}, but got ${p.nr_args}', p.pos)
 }
 
 fn (mut c Checker) check_predicate_param(is_map bool, elem_typ ast.Type, node ast.CallExpr) {
