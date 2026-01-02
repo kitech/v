@@ -3049,3 +3049,135 @@ pub fn (mut ri RunesIterator) next() ?rune {
 	}
 	return rune(impl_utf8_to_utf32(start, len))
 }
+// module builtin
+// addedbyme
+// pub fn(v string) str() string { return v } // duplicate method `str`
+// pub fn(v &string) str() string { return *v } // duplicate method `str`
+pub fn(v string) str1() string { return v }
+// pub fn(s string) toitf() Itface { return itfof(s) }
+// pub fn(s string) toany() Vmvalue { return vmvalueof(s) }
+// pub fn(s string) tovmvalue() Itface { return valueof(s) }
+// pub fn(s string) toany() Value { return valueof(s) }
+pub fn (s string) intern() string { return string_intern_impl(s) }
+pub fn (s string) toerr() IError { return error(s) }
+pub fn (s string) c_str() charptr { return charptr(s.str) }
+pub fn (s string) cptr() charptr { return charptr(s.str) }
+pub fn (s string) vptr() charptr { return voidptr(s.str) }
+pub fn (s string) bptr() charptr { return byteptr(s.str) }
+
+// safe substr prefix n
+pub fn (s string) subpfx(n int) string {
+    if s.len==0 { return ""}
+    if s.len <= n { return s} else { return s[..n] }
+}
+pub fn (s string) left(n int) string { return s.subpfx(n) }
+
+// safe substr suffix n
+pub fn (s string) subsfx(n int) string {
+    if s.len==0 { return ""}
+    if s.len <= n { return s } else { return s[s.len-n..] }
+}
+pub fn (s string) right(n int) string { return s.subsfx(n) }
+
+// allow start=-1 for begin
+// allow end=-1 for end
+pub fn (s string) mid(start int, end int) string {
+    if start >= s.len || start >= end { return "" }
+    bpos := if start < 0 { 0 } else { start }
+    epos := if end < 0 { s.len } else { end }
+    // assert 0 <= bpos <= epos << s.len
+    return s[bpos..epos]
+}
+
+pub fn (s string) padpfx(maxn int, c rune) string {
+    if maxn > s.len {
+        return c.repeat(maxn-s.len) + s
+    }
+    return s
+}
+
+pub fn (s string) padsfx(maxn int, c rune) string {
+    if maxn > s.len { return s + c.repeat(maxn-s.len) }
+    return s
+}
+
+// should name string.contains_all()
+pub fn (s string) haveall(sub string) bool {
+    for c in sub.runes() {
+        i := s.index(c.str()) or { return false } 
+    }
+    return true
+}
+
+
+// less or equal nth
+pub fn (s string) last_index_nth(needle string, nth int) ?int {
+	mut pos := -1
+	mut s2 := s
+	for i := 0; i < nth; i++ {
+		pos = s2.last_index(needle) or { break }
+		s2 = s2[..pos]
+	}
+
+	return if pos == -1 { none } else { pos }
+}
+
+pub fn (s string) elide_right(max int) string {
+	if s.len > max {
+		return s.substr(0, max) + "..."
+	}
+	return s
+}
+pub fn (s string) elide_left(max int) string {
+	if s.len > max {
+		return "..." + s.substr(s.len-max, s.len)
+	}
+	return s
+}
+pub fn (s string) elide_mid(max int) string {
+	return s
+}
+
+pub fn (s string) is_digit() bool {
+	if s.len ==0 { return false }
+	for r in s.runes() {
+		if r >= `0` && r <= `9` {} else { return false }
+	}
+	return true
+}
+
+pub fn (s string) untitle() string {
+	// if !s.is_title() { return s }
+	return s[..1].to_lower() + s[1..]
+}
+
+// \n => ;, "   " => " "
+pub fn (s string) compact() string {
+	return s.replace("\n", "; ").replace("   ", " ").replace("  ", " ")
+}
+// \seealso string.compact
+// make sure s in oneline, common used in log
+// replace "\r\n" with <RN>
+// replace "\n" with <N>
+pub fn (s string) to1line() string {
+    mut s2 := s.replace('\r\n', " <RN> ")
+    s2 = s2.replace('\n', " <N> ")
+    return s2
+}
+
+pub fn (s1 string) same_left(s2 string) string {
+    for i :=0; i < s1.len && i < s2.len ; i ++ {
+        if s1[i] != s2[i] {
+            return s1[..i]
+        }
+    }
+    return if s1.len < s2.len { s1 } else { s2 }
+}
+pub fn (s1 string) same_right(s2 string) string {
+    for i :=0; i < s1.len && i < s2.len ; i ++ {
+        if s1[s1.len-i-1] != s2[s2.len-i-1] {
+            return s1[s1.len-i-1..]
+        }
+    }
+    return if s1.len < s2.len { s1 } else { s2 }
+}

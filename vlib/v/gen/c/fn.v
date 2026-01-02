@@ -2239,6 +2239,8 @@ fn (mut g Gen) fn_call(node ast.CallExpr) {
 					is_fn_var = true
 				}
 			}
+			
+			mgcname, mgcok := check_want_magic_func(name)
 			if !is_fn_var {
 				if g.cur_fn != unsafe { nil } && g.cur_fn.trace_fns.len > 0 {
 					g.gen_trace_call(node, name)
@@ -2246,7 +2248,13 @@ fn (mut g Gen) fn_call(node ast.CallExpr) {
 						return
 					}
 				} else {
-					g.write(g.get_ternary_name(name))
+				    // g.write("/* hackpos before funcname ${name} */")
+				    if mgcok {
+						g.write(mgcname)
+					}else{
+					    g.write(g.get_ternary_name(name))
+					}
+					// g.write("/* hackpos after funcname */")
 				}
 			}
 			if node.is_unwrapped_fn_selector {
@@ -2274,7 +2282,16 @@ fn (mut g Gen) fn_call(node ast.CallExpr) {
 						g.write('__tmp_arg_${tmp_cnt_save + i}')
 					}
 				} else {
-					g.call_args(node)
+					// g.write('/*hackpos before call_args ${name}*/')
+					if mgcok {
+					    // node.pos.line_nr+1 ==? paline
+						// g.file.path ==? pafile
+					    paline, pafile, pamod, pafn := g.panic_debug_info(node.pos)
+						pacls := "" // TODO
+					    g.write('"${pafile}", ${paline}, "${pamod}.${pacls}${pafn}", ')
+					}
+	                g.call_args(node)
+					// g.write('/*hackpos after call_args*/')
 				}
 			}
 			if name != '&' {
@@ -2292,6 +2309,19 @@ fn (mut g Gen) fn_call(node ast.CallExpr) {
 		}
 	}
 	g.is_json_fn = false
+}
+
+const vcp_magic_funcs = {
+    "log__info":1, "log__error":1, "log__warn":1, "log__fatal":1, "log__debug":1,
+    "vcp__info":1, "vcp__error":1, "vcp__warn":1, "vcp__fatal":1, "vcp__debug":1,
+    "vcp__infoif":1, "vcp__errorif":1, "vcp__warnif":1, "vcp__fatalif":1, "vcp__debugif":1,
+}
+fn check_want_magic_func(name string) (string, bool) {
+    if v := vcp_magic_funcs[name] {
+        _ = v
+        return name+"_magic_file_line_func", true
+    }
+    return name, false
 }
 
 // gen_trace_call generates call to the wrapper trace fn if the call is traceable

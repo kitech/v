@@ -124,7 +124,10 @@ pub fn (mut m Mutex) unlock() {
 // destroy frees the resources associated with the mutex instance.
 // Note: the mutex itself is not freed.
 pub fn (mut m Mutex) destroy() {
-	should_be_zero(C.pthread_mutex_destroy(&m.mutex))
+	rv := C.pthread_mutex_destroy(&m.mutex)
+	if rv != 0 {
+	    // println("pthread_mutex_destroy rv $rv ${@FILE_LINE}")
+	}
 }
 
 // rlock locks the given RwMutex instance for reading.

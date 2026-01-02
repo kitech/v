@@ -90,6 +90,7 @@ pub enum Kind {
 	keyword_beg
 	key_as
 	key_asm
+	key_c99
 	key_assert
 	key_atomic
 	key_break
@@ -305,6 +306,7 @@ fn build_token_str() []string {
 	// s[Kind.key_it] = 'it'
 	s[Kind.key_else] = 'else'
 	s[Kind.key_asm] = 'asm'
+	s[Kind.key_c99] = 'c99'
 	s[Kind.key_return] = 'return'
 	s[Kind.key_module] = 'module'
 	s[Kind.key_sizeof] = 'sizeof'
@@ -632,6 +634,7 @@ pub fn kind_to_string(k Kind) string {
 		.keyword_beg { 'keyword_beg' }
 		.key_as { 'key_as' }
 		.key_asm { 'key_asm' }
+		.key_c99 { 'key_c99' }
 		.key_assert { 'key_assert' }
 		.key_atomic { 'key_atomic' }
 		.key_break { 'key_break' }

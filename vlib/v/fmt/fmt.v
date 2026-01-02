@@ -475,6 +475,9 @@ pub fn (mut f Fmt) stmts(stmts []ast.Stmt) {
 	f.indent--
 }
 
+pub fn (mut f Fmt) c99_stmt(node ast.Stmt) {
+}
+
 pub fn (mut f Fmt) stmt(node ast.Stmt) {
 	if f.is_debug {
 		eprintln('stmt ${node.type_name():-20} | pos: ${node.pos.line_str()}')
@@ -483,6 +486,9 @@ pub fn (mut f Fmt) stmt(node ast.Stmt) {
 		ast.EmptyStmt, ast.NodeError {}
 		ast.AsmStmt {
 			f.asm_stmt(node)
+		}
+		ast.C99Stmt {
+			f.c99_stmt(node)
 		}
 		ast.AssertStmt {
 			f.assert_stmt(node)

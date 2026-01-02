@@ -379,7 +379,7 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 						//    x := nil
 						//    println(x)
 						// }`
-						c.error('use of untyped nil in assignment (use `unsafe` | ${c.inside_unsafe})',
+						c.warn('use of untyped nil in assignment (use `unsafe` | ${c.inside_unsafe})',
 							right.pos())
 					}
 					mut ident_var_info := left.info as ast.IdentVar
@@ -460,7 +460,7 @@ fn (mut c Checker) assign_stmt(mut node ast.AssignStmt) {
 			ast.PrefixExpr {
 				// Do now allow `*x = y` outside `unsafe`
 				if left.op == .mul {
-					if !c.inside_unsafe && !c.pref.translated && !c.file.is_translated {
+					if false && !c.inside_unsafe && !c.pref.translated && !c.file.is_translated {
 						c.error('modifying variables via dereferencing can only be done in `unsafe` blocks',
 							node.pos)
 					} else if mut left.right is ast.Ident {

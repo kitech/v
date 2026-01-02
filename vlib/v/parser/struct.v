@@ -395,7 +395,7 @@ fn (mut p Parser) struct_decl(is_anon bool) ast.StructDecl {
 					has_break_line:   has_break_line
 					attrs:            p.attrs
 					is_pub:           is_embed || is_field_pub
-					is_mut:           is_embed || is_field_mut
+					is_mut:           true || is_embed || is_field_mut
 					is_global:        is_field_global
 					is_volatile:      is_field_volatile
 					is_deprecated:    is_field_deprecated

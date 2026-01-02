@@ -32,8 +32,13 @@ fn (mut g Gen) const_decl(node ast.ConstDecl) {
 				continue
 			}
 		}
-		name := c_name(field.name)
-		const_name := g.c_const_name(field.name)
+		mut name := c_name(field.name)
+		mut const_name := g.c_const_name(field.name)
+		if field.name.ends_with('._') {
+		    gtvar := g.new_global_tmp_var()
+		    name += gtvar
+			const_name += gtvar
+		}
 		field_expr := field.expr
 		if field.attrs.contains('cinit') || node.attrs.contains('cinit') {
 			styp := g.styp(field.typ)

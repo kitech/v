@@ -420,8 +420,10 @@ fn (mut c Checker) comptime_for(mut node ast.ComptimeFor) {
 			if sumtype_sym.kind == .sum_type {
 				variants = (sumtype_sym.info as ast.SumType).variants.clone()
 			}
+		} else if sym.kind == .interface {
+			variants = (sym.info as ast.Interface).types.clone()
 		} else if sym.kind != .sum_type {
-			c.error('${sym.name} is not Sum type to use with .variants', node.typ_pos)
+			c.error('${sym.name} is ${sym.kind} not Sum type to use with .variants', node.typ_pos)
 		} else {
 			variants = (sym.info as ast.SumType).variants.clone()
 		}
@@ -433,7 +435,7 @@ fn (mut c Checker) comptime_for(mut node ast.ComptimeFor) {
 			c.type_resolver.update_ct_type('${node.val_var}.typ', variant)
 			c.stmts(mut node.stmts)
 			c.pop_comptime_info()
-		}
+		}	
 	} else {
 		c.stmts(mut node.stmts)
 	}

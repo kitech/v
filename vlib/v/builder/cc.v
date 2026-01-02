@@ -1179,6 +1179,7 @@ enum SourceKind {
 	c
 	cpp
 	asm
+	rust
 	unknown
 }
 
@@ -1202,6 +1203,8 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 		SourceKind.cpp, base + '.cpp'
 	} else if os.exists(base + '.S') {
 		SourceKind.asm, base + '.S'
+	} else if os.exists(base + '.rs') {
+		SourceKind.asm, base + '.rs'
 	} else {
 		SourceKind.unknown, ''
 	}
@@ -1230,6 +1233,9 @@ fn (mut v Builder) build_thirdparty_obj_file(mod string, path string, moduleflag
 		mut all_options := []string{cap: 4}
 		all_options << v.pref.third_party_option
 		all_options << moduleflags.c_options_before_target()
+	all_options << '-D__VCMOD__=${mod.replace(".", "__")}' // mod=m1.m2...
+	all_options << '-D__VCMOD_LAST__=${mod.all_after(".")}'
+	all_options << '-D__VCMOD_DOTED__=${mod}'
 		all_options << '-o ${v.tcc_quoted_path(opath)}'
 		all_options << '-c ${v.tcc_quoted_path(source_file)}'
 		cpp_file := source_kind == .cpp

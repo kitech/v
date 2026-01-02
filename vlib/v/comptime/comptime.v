@@ -46,6 +46,7 @@ pub fn (mut c Comptime) stmt(mut node ast.Stmt) ast.Stmt {
 		ast.EmptyStmt {}
 		ast.NodeError {}
 		ast.AsmStmt {}
+		ast.C99Stmt {}
 		ast.DebuggerStmt {}
 		ast.AssertStmt {
 			node.expr = c.expr(mut node.expr)
