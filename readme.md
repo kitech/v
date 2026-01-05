@@ -11,9 +11,12 @@ https://kitech.github.io/v/
 * extend builtin type method on non-local module
 * `const _ = foo()` support, ensure foo() called
 * log.{info,warn,error,debug} with file:line default
+* add \_\_VCMOD\_\_ C define when compile module .c file
+* relax module scope global variables,
 * relax camelCase func/method name
 * relax mut, with all mut
-* relax unsafe,
+* relax unsafe usage
 * relax nil usage
-* relax module scope global variables,
 * complie rust .rs to .o support
+
+Latest repo [v-rlx-0.5.0-6c46fdd6a](https://github.com/kitech/v/tree/v-rlx-0.5.0-6c46fdd6a)
